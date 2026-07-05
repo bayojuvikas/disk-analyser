@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disk Space Analyzer & Premium Cleaner Suite</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="title-area">
+                <h1>Disk Space Analyzer & Smart Cleaner</h1>
+                <p>Clean drives, locate large files, browse folder sizes, and remove duplicate files safely.</p>
+            </div>
+            <div class="scan-status-text" id="status-spinner-container" style="display: none;">
+                <div class="spinner"></div>
+                <span id="global-status-text">Scanning system...</span>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="tabs-navigation">
+            <button class="tab-btn active" id="tab-large-files">Large Files Finder</button>
+            <button class="tab-btn" id="tab-folder-explorer">Folder Explorer</button>
+            <button class="tab-btn" id="tab-duplicate-finder">Duplicate Finder</button>
+            <button class="tab-btn" id="tab-smart-cleaner">Smart Cleaner</button>
+        </nav>
+
+        <!-- Drive Stats Grid -->
+        <section class="dashboard-grid">
+            <div class="glass-card drive-stat" id="drive-C">
+                <div class="drive-header">
+                    <div class="drive-name">
+                        <span class="drive-letter">C:</span>
+                        <span>System Drive</span>
+                    </div>
+                    <div class="drive-meta" id="drive-C-meta">Loading...</div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="drive-C-progress"></div>
+                </div>
+                <div class="drive-details">
+                    <span id="drive-C-used">Used: -</span>
+                    <span id="drive-C-free">Free: -</span>
+                </div>
+            </div>
+
+            <div class="glass-card drive-stat" id="drive-D">
+                <div class="drive-header">
+                    <div class="drive-name">
+                        <span class="drive-letter">D:</span>
+                        <span>Data Drive</span>
+                    </div>
+                    <div class="drive-meta" id="drive-D-meta">Loading...</div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="drive-D-progress"></div>
+                </div>
+                <div class="drive-details">
+                    <span id="drive-D-used">Used: -</span>
+                    <span id="drive-D-free">Free: -</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTENT TAB 1: LARGE FILES FINDER -->
+        <main class="tab-content active" id="content-large-files">
+            <section class="glass-card" style="margin-bottom: 1.5rem;">
+                <div class="control-panel">
+                    <div class="scan-controls">
+                        <select class="filter-select" id="scan-mode" style="padding: 0.75rem 2rem 0.75rem 1rem; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); color: white;">
+                            <option value="fast">⚡ Fast Index Scan (0.5s)</option>
+                            <option value="deep">🔍 Deep Disk Crawler (Thorough)</option>
+                        </select>
+                        <button class="btn btn-primary" id="btn-scan-start">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            Start Scan
+                        </button>
+                        <button class="btn btn-secondary" id="btn-scan-stop" disabled>
+                            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                            Stop Scan
+                        </button>
+                    </div>
+                    <div id="scan-progress-details" style="font-size: 0.9rem; color: var(--text-secondary);">
+                        Press 'Start Scan' to begin analyzing drives.
+                    </div>
+                </div>
+            </section>
+
+            <section class="filters-bar">
+                <div class="search-wrapper">
+                    <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" class="search-input" id="search-input" placeholder="Search files by name or path...">
+                </div>
+                
+                <select class="filter-select" id="filter-drive">
+                    <option value="all">All Drives</option>
+                    <option value="C">Drive C: only</option>
+                    <option value="D">Drive D: only</option>
+                </select>
+
+                <select class="filter-select" id="filter-type">
+                    <option value="all">All File Types</option>
+                    <option value="video">Videos (.mp4, .mkv, .avi, .mov)</option>
+                    <option value="archive">Archives (.zip, .rar, .7z, .tar)</option>
+                    <option value="virtual">Virtual Disk/ISO (.iso, .vmdk, .vhdx)</option>
+                    <option value="installer">Installers (.exe, .msi)</option>
+                    <option value="document">Documents (.pdf, .docx, .xlsx)</option>
+                </select>
+
+                <select class="filter-select" id="filter-size">
+                    <option value="all">All Sizes</option>
+                    <option value="1gb">&gt; 1 GB</option>
+                    <option value="500mb">500 MB - 1 GB</option>
+                    <option value="100mb">100 MB - 500 MB</option>
+                    <option value="50mb">50 MB - 100 MB</option>
+                    <option value="10mb">10 MB - 50 MB</option>
+                    <option value="small">&lt; 10 MB</option>
+                </select>
+            </section>
+
+            <!-- Bulk actions strip (initially hidden) -->
+            <div class="bulk-actions-bar" id="bulk-bar" style="display: none;">
+                <span id="bulk-selected-count">0 files selected</span>
+                <div>
+                    <button class="btn btn-secondary" onclick="selectAllFilteredFiles()" style="padding: 0.5rem 1rem; font-size: 0.85rem; margin-right: 0.5rem;">
+                        Select All
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearLargeFilesSelection()" style="padding: 0.5rem 1rem; font-size: 0.85rem; margin-right: 0.5rem;">
+                        Clear Selection
+                    </button>
+                    <button class="btn btn-primary" onclick="openBulkTransferModal()" style="padding: 0.5rem 1rem; font-size: 0.85rem; margin-right: 0.5rem; background: var(--accent-blue);">
+                        Copy/Move Selected
+                    </button>
+                    <button class="btn btn-danger" id="btn-bulk-delete" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                        Delete Selected
+                    </button>
+                </div>
+            </div>
+
+            <div class="analytics-container">
+                <!-- Large File list -->
+                <div class="glass-card files-card" style="flex: 2;">
+                    <div class="files-header">
+                        <div class="checkbox-custom" id="check-all-files" onclick="toggleSelectAll()"></div>
+                        <div>File Path</div>
+                        <div style="text-align: right; padding-right: 1.5rem;">Size</div>
+                        <div>Drive</div>
+                        <div style="text-align: right;">Actions</div>
+                    </div>
+                    <div class="files-body" id="files-list-body">
+                        <div class="empty-state">
+                            <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 10-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z"/></svg>
+                            <p>No scan data. Start scanning to view large files.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Category Pie Chart -->
+                <div class="glass-card chart-card" id="analytics-chart-card">
+                    <h3>Space Distribution</h3>
+                    <div class="chart-wrapper">
+                        <svg width="180" height="180" viewBox="0 0 36 36" style="transform: rotate(-90deg);">
+                            <circle cx="18" cy="18" r="15.915" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="3.2"></circle>
+                            <circle id="chart-segment-video" cx="18" cy="18" r="15.915" fill="none" stroke="var(--accent-cyan)" stroke-width="3.2" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
+                            <circle id="chart-segment-archive" cx="18" cy="18" r="15.915" fill="none" stroke="var(--accent-blue)" stroke-width="3.2" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
+                            <circle id="chart-segment-installer" cx="18" cy="18" r="15.915" fill="none" stroke="var(--accent-red)" stroke-width="3.2" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
+                            <circle id="chart-segment-document" cx="18" cy="18" r="15.915" fill="none" stroke="var(--accent-green)" stroke-width="3.2" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
+                            <circle id="chart-segment-misc" cx="18" cy="18" r="15.915" fill="none" stroke="#eab308" stroke-width="3.2" stroke-dasharray="0 100" stroke-dashoffset="0"></circle>
+                        </svg>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <span><span class="legend-color" style="background: var(--accent-cyan);"></span>Videos</span>
+                            <span id="legend-pct-video">0%</span>
+                        </div>
+                        <div class="legend-item">
+                            <span><span class="legend-color" style="background: var(--accent-blue);"></span>Archives</span>
+                            <span id="legend-pct-archive">0%</span>
+                        </div>
+                        <div class="legend-item">
+                            <span><span class="legend-color" style="background: var(--accent-red);"></span>Installers</span>
+                            <span id="legend-pct-installer">0%</span>
+                        </div>
+                        <div class="legend-item">
+                            <span><span class="legend-color" style="background: var(--accent-green);"></span>Documents</span>
+                            <span id="legend-pct-document">0%</span>
+                        </div>
+                        <div class="legend-item">
+                            <span><span class="legend-color" style="background: #eab308;"></span>Others</span>
+                            <span id="legend-pct-misc">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- CONTENT TAB 2: FOLDER EXPLORER -->
+        <main class="tab-content" id="content-folder-explorer">
+            <div class="glass-card" style="margin-bottom: 1rem;">
+                <h3>Interactive Folder Space Tree</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
+                    Browse folders sorted by size to identify exactly what directory takes up space. Pre-indexed for instantaneous responses.
+                </p>
+            </div>
+            <div class="glass-card tree-container" id="folder-tree-root">
+                <div class="empty-state">
+                    <p>No scan data available. Start a scan in "Large Files Finder" to populate folder tree.</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- CONTENT TAB 3: DUPLICATE FINDER -->
+        <main class="tab-content" id="content-duplicate-finder">
+            <div class="glass-card" style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3>Duplicate File Finder</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.25rem;">
+                        Find files with matching size and cryptographic content hash to reclaim duplicate space.
+                    </p>
+                </div>
+                <button class="btn btn-primary" id="btn-scan-duplicates">Find Duplicates</button>
+            </div>
+
+            <div id="duplicate-groups-container">
+                <div class="glass-card empty-state">
+                    <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    <p>Click "Find Duplicates" to scan for identical files across your drives.</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- CONTENT TAB 4: SMART CLEANER -->
+        <main class="tab-content" id="content-smart-cleaner">
+            <div class="smart-clean-grid">
+                <div class="glass-card" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h3>Safe-to-Clean System Items</h3>
+                        <button class="btn btn-secondary" id="btn-smart-scan" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                            Scan Cache Items
+                        </button>
+                    </div>
+
+                    <div id="smart-items-list">
+                        <div class="clean-target-item">
+                            <div class="clean-target-info">
+                                <div class="checkbox-custom checked" id="check-user-temp" onclick="toggleSmartTarget(this)"></div>
+                                <div class="clean-icon">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                </div>
+                                <div class="clean-details">
+                                    <h4>User Temporary Files</h4>
+                                    <p>Application caches, logs, and temporary structures in your user profile.</p>
+                                </div>
+                            </div>
+                            <div class="clean-size" id="size-user-temp">0 MB</div>
+                        </div>
+
+                        <div class="clean-target-item">
+                            <div class="clean-target-info">
+                                <div class="checkbox-custom checked" id="check-system-temp" onclick="toggleSmartTarget(this)"></div>
+                                <div class="clean-icon">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                </div>
+                                <div class="clean-details">
+                                    <h4>System Temporary Files</h4>
+                                    <p>Windows update logs, generic temp directories, and diagnostics cache.</p>
+                                </div>
+                            </div>
+                            <div class="clean-size" id="size-system-temp">0 MB</div>
+                        </div>
+
+                        <div class="clean-target-item">
+                            <div class="clean-target-info">
+                                <div class="checkbox-custom checked" id="check-browser-cache" onclick="toggleSmartTarget(this)"></div>
+                                <div class="clean-icon">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                                </div>
+                                <div class="clean-details">
+                                    <h4>Browser Caches</h4>
+                                    <p>Chrome, Edge, and web browser temporary files and downloaded site resources.</p>
+                                </div>
+                            </div>
+                            <div class="clean-size" id="size-browser-cache">0 MB</div>
+                        </div>
+
+                        <div class="clean-target-item">
+                            <div class="clean-target-info">
+                                <div class="checkbox-custom" id="check-old-downloads" onclick="toggleSmartTarget(this)"></div>
+                                <div class="clean-icon">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                </div>
+                                <div class="clean-details">
+                                    <h4>Downloads Folder Clutter</h4>
+                                    <p>Files in your Downloads directory that haven't been accessed for over 30 days.</p>
+                                </div>
+                            </div>
+                            <div class="clean-size" id="size-old-downloads">0 MB</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between; gap: 1.5rem;">
+                    <div>
+                        <h3>Action Dashboard</h3>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem; line-height: 1.4;">
+                            Smart Cleaner scans safe targets that are safe to delete under normal circumstances. Your files will be deleted permanently.
+                        </p>
+                    </div>
+
+                    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); border-radius: 12px; padding: 1rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                            <span>Selected Space:</span>
+                            <strong id="smart-selected-space" style="color: var(--accent-green);">0 MB</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span>Total Clutter Found:</span>
+                            <strong id="smart-total-space">0 MB</strong>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-success" id="btn-smart-clean-run" disabled style="width: 100%;">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        Clean Clutter
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirm-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <svg width="24" height="24" fill="none" stroke="var(--accent-red)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <span class="modal-title" id="modal-title-text">Delete File Permanently?</span>
+            </div>
+            <div class="modal-body">
+                <p id="modal-desc-text">Are you sure you want to permanently delete this file? This action <strong>cannot be undone</strong>.</p>
+                <div class="warning-box" id="modal-file-details">
+                    <!-- Dynamic details -->
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="btn-modal-cancel">Cancel</button>
+                <button class="btn btn-danger" id="btn-modal-confirm">Delete Permanently</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- High Performance Transfer Modal -->
+    <div class="modal-overlay" id="transfer-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <svg width="24" height="24" fill="none" stroke="var(--accent-blue)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                <span class="modal-title">Fast File Transfer</span>
+            </div>
+            <div class="modal-body">
+                <div id="transfer-setup-view">
+                    <p style="color:var(--text-secondary); font-size:0.9rem;">Copy or Move file to another location with optimized speed buffers (8MB SSD optimized chunks).</p>
+                    <div style="margin-top: 1rem;">
+                        <label style="font-size:0.8rem; color:var(--text-secondary);">Source File:</label>
+                        <div id="transfer-src-path" style="font-family:monospace; font-size:0.8rem; word-break:break-all; background:rgba(255,255,255,0.02); padding:0.5rem; border-radius:6px; border:1px solid var(--glass-border); margin-top:0.25rem;"></div>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <label style="font-size:0.8rem; color:var(--text-secondary);">Destination Path:</label>
+                        <input type="text" id="transfer-dest-path" class="search-input" style="padding:0.6rem 0.8rem; border-radius:8px; margin-top:0.25rem; font-size:0.85rem;" placeholder="e.g. D:\Backups\file.zip">
+                    </div>
+                    <div style="margin-top: 1.25rem; display:flex; gap:1.5rem; font-size:0.9rem;">
+                        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                            <input type="radio" name="transfer-op" value="copy" checked> Copy File (Keep original)
+                        </label>
+                        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                            <input type="radio" name="transfer-op" value="move"> Move File (Delete original)
+                        </label>
+                    </div>
+                </div>
+
+                <div id="transfer-progress-view" style="display:none;">
+                    <p style="color:var(--accent-cyan); font-size:0.9rem; font-weight:600; display:flex; align-items:center; gap:0.5rem;">
+                        <span class="spinner" style="border-top-color: var(--accent-cyan);"></span> High-Speed Transferring...
+                    </p>
+                    <div class="progress-bar-container" style="margin-top:1.25rem;">
+                        <div class="progress-bar" id="transfer-progress-bar" style="width:0%;"></div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:0.85rem; color:var(--text-secondary); margin-top:0.5rem;">
+                        <span id="transfer-stats-bytes">0 MB / 0 MB</span>
+                        <span id="transfer-stats-speed" style="color: var(--accent-green); font-weight:700;">0 MB/s</span>
+                    </div>
+                    <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.25rem; text-align:right;">
+                        <span id="transfer-stats-eta">Calculating ETA...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="btn-transfer-cancel">Cancel</button>
+                <button class="btn btn-primary" id="btn-transfer-start">Start Transfer</button>
+                <button class="btn btn-danger" id="btn-transfer-abort" style="display:none;">Abort Transfer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Toast -->
+    <div class="alert-toast" id="toast">Notification Message</div>
+
+    <script>
+        let filesData = [];
+        let smartCleanData = {};
+        let selectedFiles = new Set();
+        let pollingInterval = null;
+        let deleteCallback = null;
+        let transferPollInterval = null;
+
+        // TAB SWITCHING
+        document.getElementById('tab-large-files').addEventListener('click', () => switchTab('large-files'));
+        document.getElementById('tab-folder-explorer').addEventListener('click', () => switchTab('folder-explorer'));
+        document.getElementById('tab-duplicate-finder').addEventListener('click', () => switchTab('duplicate-finder'));
+        document.getElementById('tab-smart-cleaner').addEventListener('click', () => switchTab('smart-cleaner'));
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            if (tab === 'large-files') {
+                document.getElementById('tab-large-files').classList.add('active');
+                document.getElementById('content-large-files').classList.add('active');
+            } else if (tab === 'folder-explorer') {
+                document.getElementById('tab-folder-explorer').classList.add('active');
+                document.getElementById('content-folder-explorer').classList.add('active');
+                loadFolderTree("");
+            } else if (tab === 'duplicate-finder') {
+                document.getElementById('tab-duplicate-finder').classList.add('active');
+                document.getElementById('content-duplicate-finder').classList.add('active');
+            } else {
+                document.getElementById('tab-smart-cleaner').classList.add('active');
+                document.getElementById('content-smart-cleaner').classList.add('active');
+            }
+        }
+
+        // Fetch drive stats
+        async function fetchSystemStats() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                
+                updateDriveUI('C', data.drives.C);
+                updateDriveUI('D', data.drives.D);
+                
+                const isScanning = data.scanning;
+                document.getElementById('btn-scan-start').disabled = isScanning;
+                document.getElementById('btn-scan-stop').disabled = !isScanning;
+                
+                const spinner = document.getElementById('status-spinner-container');
+                if (isScanning) {
+                    spinner.style.display = 'flex';
+                    document.getElementById('global-status-text').innerText = 'Scanning drives...';
+                    document.getElementById('scan-progress-details').innerHTML = `
+                        Processed: <strong>${data.progress.scanned_files.toLocaleString()}</strong> files | 
+                        Current: <span style="font-family: monospace; font-size: 0.8rem; opacity: 0.7;">${data.progress.current_dir || 'Scanning...'}</span>
+                    `;
+                    if (!pollingInterval) startPolling();
+                } else {
+                    spinner.style.display = 'none';
+                    if (pollingInterval) {
+                        stopPolling();
+                        showToast('Scan completed!');
+                        fetchFiles();
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch status:", err);
+            }
+        }
+
+        function updateDriveUI(letter, stats) {
+            const progress = document.getElementById(`drive-${letter}-progress`);
+            const meta = document.getElementById(`drive-${letter}-meta`);
+            const used = document.getElementById(`drive-${letter}-used`);
+            const free = document.getElementById(`drive-${letter}-free`);
+            const card = document.getElementById(`drive-${letter}`);
+
+            if (!stats.exists) {
+                card.style.opacity = '0.5';
+                meta.innerText = 'Not Available';
+                progress.style.width = '0%';
+                used.innerText = 'Used: -';
+                free.innerText = 'Free: -';
+                return;
+            }
+
+            card.style.opacity = '1';
+            const pct = stats.percent_used;
+            progress.style.width = pct + '%';
+            
+            progress.className = 'progress-bar';
+            if (pct > 85) progress.classList.add('red');
+            else if (pct > 70) progress.classList.add('orange');
+
+            meta.innerText = `${pct}% Full`;
+            used.innerText = `Used: ${formatBytes(stats.used)}`;
+            free.innerText = `Free: ${formatBytes(stats.free)} of ${formatBytes(stats.total)}`;
+        }
+
+        // Fetch large files
+        async function fetchFiles() {
+            try {
+                const res = await fetch('/api/files');
+                const data = await res.json();
+                filesData = data.files || [];
+                renderFiles();
+            } catch (err) {
+                console.error("Failed to fetch files:", err);
+            }
+        }
+
+        // Multi-select actions
+        function toggleFileSelect(path) {
+            if (selectedFiles.has(path)) {
+                selectedFiles.delete(path);
+            } else {
+                selectedFiles.add(path);
+            }
+            updateBulkBar();
+            renderFiles();
+        }
+
+        function toggleSelectAll() {
+            const visibleRows = getFilteredFiles();
+            const checkAll = document.getElementById('check-all-files');
+            const isAllChecked = checkAll.classList.contains('checked');
+
+            if (isAllChecked) {
+                visibleRows.forEach(f => selectedFiles.delete(f.path));
+                checkAll.classList.remove('checked');
+            } else {
+                visibleRows.forEach(f => selectedFiles.add(f.path));
+                checkAll.classList.add('checked');
+            }
+            updateBulkBar();
+            renderFiles();
+        }
+
+        function selectAllFilteredFiles() {
+            const filtered = getFilteredFiles();
+            filtered.forEach(f => selectedFiles.add(f.path));
+            updateBulkBar();
+            renderFiles();
+        }
+
+        function clearLargeFilesSelection() {
+            selectedFiles.clear();
+            updateBulkBar();
+            renderFiles();
+        }
+
+        function updateBulkBar() {
+            const bar = document.getElementById('bulk-bar');
+            const countSpan = document.getElementById('bulk-selected-count');
+            if (selectedFiles.size > 0) {
+                bar.style.display = 'flex';
+                let totalBytes = 0;
+                selectedFiles.forEach(p => {
+                    const found = filesData.find(f => f.path === p);
+                    if (found) totalBytes += found.size;
+                });
+                countSpan.innerText = `${selectedFiles.size} files selected (${formatBytes(totalBytes)})`;
+            } else {
+                bar.style.display = 'none';
+            }
+        }
+
+        function getFilteredFiles() {
+            const searchVal = document.getElementById('search-input').value.toLowerCase().trim();
+            const driveFilter = document.getElementById('filter-drive').value;
+            const typeFilter = document.getElementById('filter-type').value;
+            const sizeFilter = document.getElementById('filter-size').value;
+
+            const videoExts = ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.m4v'];
+            const archiveExts = ['.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz'];
+            const virtualExts = ['.iso', '.vmdk', '.vhdx', '.vdi', '.img'];
+            const installerExts = ['.exe', '.msi', '.pkg', '.dmg', '.bat', '.cmd'];
+            const documentExts = ['.pdf', '.docx', '.xlsx', '.pptx', '.txt', '.csv'];
+            const imageExts = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.bmp', '.ico'];
+            const audioExts = ['.mp3', '.wav', '.flac', '.aac', '.ogg', '.wma', '.m4a'];
+
+            // Semantic / Natural Language Mapping
+            const videoKeywords = ['movies', 'movie', 'videos', 'video', 'films', 'film', 'cinema', 'clips', 'clip', 'films'];
+            const archiveKeywords = ['zips', 'zip', 'archives', 'archive', 'compress', 'compressed', 'rars', 'rar', '7zs', '7z'];
+            const documentKeywords = ['docs', 'doc', 'documents', 'document', 'text', 'pdf', 'sheets', 'xlsx', 'txt', 'pdfs'];
+            const installerKeywords = ['installers', 'installer', 'apps', 'app', 'programs', 'program', 'executables', 'executable', 'exes', 'exe', 'msis', 'msi'];
+            const imageKeywords = ['pics', 'pic', 'images', 'image', 'photos', 'photo', 'pictures', 'picture', 'pngs', 'png', 'jpgs', 'jpg', 'jpegs', 'jpeg'];
+            const audioKeywords = ['songs', 'song', 'audio', 'music', 'mp3s', 'mp3', 'sound', 'sounds', 'tunes', 'tune', 'wavs', 'wav'];
+
+            const queryTerms = searchVal.split(/\s+/).filter(t => t.length > 0);
+            let semanticExts = null;
+            let textFilterTerms = [];
+
+            queryTerms.forEach(term => {
+                if (videoKeywords.includes(term)) {
+                    semanticExts = (semanticExts || []).concat(videoExts);
+                } else if (archiveKeywords.includes(term)) {
+                    semanticExts = (semanticExts || []).concat(archiveExts);
+                } else if (documentKeywords.includes(term)) {
+                    semanticExts = (semanticExts || []).concat(documentExts);
+                } else if (installerKeywords.includes(term)) {
+                    semanticExts = (semanticExts || []).concat(installerExts);
+                } else if (imageKeywords.includes(term)) {
+                    semanticExts = (semanticExts || []).concat(imageExts);
+                } else if (audioKeywords.includes(term)) {
+                    semanticExts = (semanticExts || []).concat(audioExts);
+                } else {
+                    textFilterTerms.push(term);
+                }
+            });
+
+            return filesData.filter(file => {
+                const pathLower = file.path.toLowerCase();
+                const nameLower = file.name.toLowerCase();
+
+                if (semanticExts) {
+                    const ext = '.' + file.name.split('.').pop().toLowerCase();
+                    if (!semanticExts.includes(ext)) {
+                        return false;
+                    }
+                }
+
+                if (textFilterTerms.length > 0) {
+                    const matchedAll = textFilterTerms.every(term => 
+                        pathLower.includes(term) || nameLower.includes(term)
+                    );
+                    if (!matchedAll) return false;
+                }
+
+                if (driveFilter !== 'all' && file.drive !== driveFilter) {
+                    return false;
+                }
+
+                if (typeFilter !== 'all') {
+                    const ext = '.' + file.name.split('.').pop().toLowerCase();
+                    if (typeFilter === 'video' && !videoExts.includes(ext)) return false;
+                    if (typeFilter === 'archive' && !archiveExts.includes(ext)) return false;
+                    if (typeFilter === 'virtual' && !virtualExts.includes(ext)) return false;
+                    if (typeFilter === 'installer' && !installerExts.includes(ext)) return false;
+                    if (typeFilter === 'document' && !documentExts.includes(ext)) return false;
+                }
+
+                if (sizeFilter !== 'all') {
+                    const mb = 1024 * 1024;
+                    if (sizeFilter === '1gb' && file.size < 1024 * mb) return false;
+                    if (sizeFilter === '500mb' && (file.size < 500 * mb || file.size >= 1024 * mb)) return false;
+                    if (sizeFilter === '100mb' && (file.size < 100 * mb || file.size >= 500 * mb)) return false;
+                    if (sizeFilter === '50mb' && (file.size < 50 * mb || file.size >= 100 * mb)) return false;
+                    if (sizeFilter === '10mb' && (file.size < 10 * mb || file.size >= 50 * mb)) return false;
+                    if (sizeFilter === 'small' && file.size >= 10 * mb) return false;
+                }
+
+                return true;
+            });
+        }
+
+        // Render files & update charts
+        function renderFiles() {
+            const listBody = document.getElementById('files-list-body');
+            const filtered = getFilteredFiles();
+
+            const checkAll = document.getElementById('check-all-files');
+            if (filtered.length > 0 && filtered.every(f => selectedFiles.has(f.path))) {
+                checkAll.classList.add('checked');
+            } else {
+                checkAll.classList.remove('checked');
+            }
+
+            if (filtered.length === 0) {
+                listBody.innerHTML = `
+                    <div class="empty-state">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <p>No files match the filters.</p>
+                    </div>
+                `;
+                updateChart(0, 0, 0, 0, 0);
+                return;
+            }
+
+            listBody.innerHTML = filtered.map(file => {
+                const isChecked = selectedFiles.has(file.path) ? 'checked' : '';
+                return `
+                    <div class="file-row">
+                        <div class="checkbox-custom ${isChecked}" onclick="toggleFileSelect('${escapeHtml(file.path.replace(/\\/g, '\\\\'))}')"></div>
+                        <div class="file-info">
+                            <div class="file-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
+                            <div class="file-path" title="${escapeHtml(file.path)}">${escapeHtml(file.path)}</div>
+                        </div>
+                        <div class="file-size" style="text-align: right; padding-right: 1.5rem;">${formatBytes(file.size)}</div>
+                        <div class="file-drive">
+                            <span class="drive-letter" style="font-size: 0.75rem; padding: 0.1rem 0.4rem;">${file.drive}:</span>
+                        </div>
+                        <div class="file-action">
+                            <button class="btn-icon" onclick="openTransferModal('${escapeHtml(file.path.replace(/\\/g, '\\\\'))}')" title="Fast Copy / Move">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                            </button>
+                            <button class="btn-icon" onclick="revealInExplorer('${escapeHtml(file.path.replace(/\\/g, '\\\\'))}')" title="Reveal in Explorer">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                            </button>
+                            <button class="btn-icon-danger" onclick="triggerDelete('${escapeHtml(file.path.replace(/\\/g, '\\\\'))}', ${file.size})" title="Delete File">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            let videoSize = 0, archiveSize = 0, installerSize = 0, docSize = 0, miscSize = 0;
+            const videoExts = ['.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm'];
+            const archiveExts = ['.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz'];
+            const installerExts = ['.exe', '.msi', '.pkg', '.dmg'];
+            const docExts = ['.pdf', '.docx', '.xlsx', '.pptx', '.txt', '.csv'];
+
+            filtered.forEach(file => {
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                if (videoExts.includes(ext)) videoSize += file.size;
+                else if (archiveExts.includes(ext)) archiveSize += file.size;
+                else if (installerExts.includes(ext)) installerSize += file.size;
+                else if (docExts.includes(ext)) docSize += file.size;
+                else miscSize += file.size;
+            });
+
+            updateChart(videoSize, archiveSize, installerSize, docSize, miscSize);
+        }
+
+        function updateChart(video, archive, installer, doc, misc) {
+            const total = video + archive + installer + doc + misc;
+            if (total === 0) {
+                document.querySelectorAll('.chart-wrapper circle[id^="chart-segment"]').forEach(circle => {
+                    circle.setAttribute('stroke-dasharray', '0 100');
+                });
+                ['video', 'archive', 'installer', 'document', 'misc'].forEach(cat => {
+                    document.getElementById(`legend-pct-${cat}`).innerText = '0%';
+                });
+                return;
+            }
+
+            const videoPct = (video / total) * 100;
+            const archivePct = (archive / total) * 100;
+            const installerPct = (installer / total) * 100;
+            const docPct = (doc / total) * 100;
+            const miscPct = (misc / total) * 100;
+
+            let cumulative = 0;
+            setSegment('chart-segment-video', videoPct, cumulative); cumulative += videoPct;
+            setSegment('chart-segment-archive', archivePct, cumulative); cumulative += archivePct;
+            setSegment('chart-segment-installer', installerPct, cumulative); cumulative += installerPct;
+            setSegment('chart-segment-document', docPct, cumulative); cumulative += docPct;
+            setSegment('chart-segment-misc', miscPct, cumulative);
+
+            document.getElementById('legend-pct-video').innerText = Math.round(videoPct) + '%';
+            document.getElementById('legend-pct-archive').innerText = Math.round(archivePct) + '%';
+            document.getElementById('legend-pct-installer').innerText = Math.round(installerPct) + '%';
+            document.getElementById('legend-pct-document').innerText = Math.round(docPct) + '%';
+            document.getElementById('legend-pct-misc').innerText = Math.round(miscPct) + '%';
+        }
+
+        function setSegment(id, percent, offset) {
+            const circle = document.getElementById(id);
+            circle.setAttribute('stroke-dasharray', `${percent} 100`);
+            circle.setAttribute('stroke-dashoffset', -offset);
+        }
+
+        // --- Folder Size Explorer Tree ---
+
+        async function loadFolderTree(path, targetNodeElement = null) {
+            const container = targetNodeElement || document.getElementById('folder-tree-root');
+            
+            if (!targetNodeElement) {
+                container.innerHTML = '<div style="display:flex; justify-content:center; padding:2rem;"><div class="spinner"></div></div>';
+            }
+            
+            try {
+                const res = await fetch(`/api/folder-tree?path=${encodeURIComponent(path)}`);
+                const data = await res.json();
+                
+                if (!data.children || data.children.length === 0) {
+                    if (!targetNodeElement) {
+                        container.innerHTML = '<div class="empty-state"><p>No folders scanned. Run a scan first!</p></div>';
+                    }
+                    return;
+                }
+
+                const nodesHtml = data.children.map(child => {
+                    const arrow = child.is_dir ? `<div class="tree-arrow">▸</div>` : `<div style="width:16px;"></div>`;
+                    const icon = child.is_dir 
+                        ? `<svg class="tree-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>`
+                        : `<svg class="tree-icon file" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>`;
+                    
+                    const datasetPath = child.path.replace(/'/g, "\\'");
+                    const onclickStr = child.is_dir ? `onclick="toggleTreeNode(event, this, '${escapeHtml(datasetPath.replace(/\\/g, '\\\\'))}')"` : '';
+
+                    const copyBtn = !child.is_dir 
+                        ? `<button class="btn-icon" onclick="openTransferModal('${escapeHtml(child.path.replace(/\\/g, '\\\\'))}'); event.stopPropagation();" title="Fast Copy / Move"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg></button>`
+                        : '';
+
+                    return `
+                        <div class="tree-node" id="node-${child.path.replace(/[^a-zA-Z0-9]/g, '_')}">
+                            <div class="tree-node-header" ${onclickStr}>
+                                ${arrow}
+                                ${icon}
+                                <span class="tree-name" title="${escapeHtml(child.path)}">${escapeHtml(child.name)}</span>
+                                <span class="tree-size">${formatBytes(child.size)}</span>
+                                <div class="tree-actions">
+                                    ${copyBtn}
+                                    <button class="btn-icon" onclick="revealInExplorer('${escapeHtml(child.path.replace(/\\/g, '\\\\'))}'); event.stopPropagation();" title="Reveal in Explorer">
+                                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                                    </button>
+                                    <button class="btn-icon-danger" onclick="triggerDelete('${escapeHtml(child.path.replace(/\\/g, '\\\\'))}', ${child.size}); event.stopPropagation();" title="Delete Permanent">
+                                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="tree-node-children" style="display:none;"></div>
+                        </div>
+                    `;
+                }).join('');
+
+                if (targetNodeElement) {
+                    const childrenDiv = targetNodeElement.parentElement.querySelector('.tree-node-children');
+                    childrenDiv.innerHTML = nodesHtml;
+                    childrenDiv.style.display = 'block';
+                    targetNodeElement.querySelector('.tree-arrow').classList.add('expanded');
+                } else {
+                    container.innerHTML = nodesHtml;
+                }
+            } catch (err) {
+                showToast('Failed to load folder children', true);
+            }
+        }
+
+        async function toggleTreeNode(event, headerElement, path) {
+            const arrow = headerElement.querySelector('.tree-arrow');
+            const childrenDiv = headerElement.parentElement.querySelector('.tree-node-children');
+            
+            if (arrow.classList.contains('expanded')) {
+                childrenDiv.style.display = 'none';
+                arrow.classList.remove('expanded');
+            } else {
+                if (childrenDiv.innerHTML === "") {
+                    headerElement.style.opacity = '0.6';
+                    await loadFolderTree(path, headerElement);
+                    headerElement.style.opacity = '1';
+                } else {
+                    childrenDiv.style.display = 'block';
+                    arrow.classList.add('expanded');
+                }
+            }
+        }
+
+        // --- Duplicate File Finder ---
+
+        let duplicateGroups = [];
+        let selectedDuplicates = new Set();
+
+        document.getElementById('btn-scan-duplicates').onclick = async () => {
+            const btn = document.getElementById('btn-scan-duplicates');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Analyzing...';
+            try {
+                const res = await fetch('/api/duplicates');
+                const data = await res.json();
+                duplicateGroups = data.groups || [];
+                renderDuplicates();
+                showToast('Duplicate search finished!');
+            } catch (err) {
+                showToast('Failed to scan duplicates', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Find Duplicates';
+            }
+        };
+
+        function toggleDupSelect(path) {
+            if (selectedDuplicates.has(path)) {
+                selectedDuplicates.delete(path);
+            } else {
+                selectedDuplicates.add(path);
+            }
+            renderDuplicates();
+        }
+
+        function selectAllDuplicatesExceptOne(groupIndex) {
+            const group = duplicateGroups[groupIndex];
+            if (!group) return;
+            
+            for (let i = 1; i < group.files.length; i++) {
+                selectedDuplicates.add(group.files[i].path);
+            }
+            renderDuplicates();
+        }
+
+        function selectAllDuplicatesGlobally() {
+            selectedDuplicates.clear();
+            duplicateGroups.forEach(group => {
+                for (let i = 1; i < group.files.length; i++) {
+                    selectedDuplicates.add(group.files[i].path);
+                }
+            });
+            renderDuplicates();
+        }
+
+        function clearDuplicateSelection() {
+            selectedDuplicates.clear();
+            renderDuplicates();
+        }
+
+        function renderDuplicates() {
+            const container = document.getElementById('duplicate-groups-container');
+            if (duplicateGroups.length === 0) {
+                container.innerHTML = `
+                    <div class="glass-card empty-state">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <p>No duplicate files found! Start a scan first or adjust filters.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="bulk-actions-bar" style="margin-bottom:1.5rem;">
+                    <span>${selectedDuplicates.size} duplicates selected for deletion</span>
+                    <div>
+                        <button class="btn btn-secondary" onclick="selectAllDuplicatesGlobally()" style="padding:0.5rem 1rem; font-size:0.85rem; margin-right:0.5rem;">
+                            Select All (Keep 1 copy of each)
+                        </button>
+                        <button class="btn btn-secondary" onclick="clearDuplicateSelection()" style="padding:0.5rem 1rem; font-size:0.85rem; margin-right:0.5rem;" ${selectedDuplicates.size === 0 ? 'disabled' : ''}>
+                            Clear Selection
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteSelectedDuplicates()" style="padding:0.5rem 1rem; font-size:0.85rem;" ${selectedDuplicates.size === 0 ? 'disabled' : ''}>
+                            Delete Selected Duplicates
+                        </button>
+                    </div>
+                </div>
+            ` + duplicateGroups.map((group, gIdx) => {
+                const totalReclaimable = group.size * (group.files.length - 1);
+                return `
+                    <div class="dup-group">
+                        <div class="dup-group-header">
+                            <div>
+                                <span class="dup-group-title">${group.files[0].name}</span>
+                                <span class="dup-meta" style="margin-left: 1rem;">Duplicates: ${group.files.length} | Size: ${formatBytes(group.size)}</span>
+                            </div>
+                            <button class="btn btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.75rem;" onclick="selectAllDuplicatesExceptOne(${gIdx})">
+                                Select duplicates only (Keep 1 copy)
+                            </button>
+                        </div>
+                        <div class="dup-rows-container">
+                            ${group.files.map(file => {
+                                const isChecked = selectedDuplicates.has(file.path) ? 'checked' : '';
+                                return `
+                                    <div class="dup-row">
+                                        <div class="checkbox-custom ${isChecked}" onclick="toggleDupSelect('${escapeHtml(file.path.replace(/\\/g, '\\\\'))}')"></div>
+                                        <div style="min-width:0;">
+                                            <div style="font-size:0.9rem; font-weight:500; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${escapeHtml(file.path)}</div>
+                                        </div>
+                                        <div class="file-action">
+                                            <button class="btn-icon" onclick="revealInExplorer('${escapeHtml(file.path.replace(/\\/g, '\\\\'))}')" title="Reveal in Explorer">
+                                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function deleteSelectedDuplicates() {
+            if (selectedDuplicates.size === 0) return;
+            const dupArray = Array.from(selectedDuplicates);
+            
+            document.getElementById('modal-title-text').innerText = 'Delete Duplicate Copies?';
+            document.getElementById('modal-desc-text').innerText = `Are you sure you want to permanently delete these ${selectedDuplicates.size} duplicate copies?`;
+            
+            const detailsDiv = document.getElementById('modal-file-details');
+            detailsDiv.innerHTML = `
+                <strong>Items selected:</strong> ${selectedDuplicates.size} files
+            `;
+            document.getElementById('confirm-modal').classList.add('active');
+
+            deleteCallback = async () => {
+                try {
+                    const response = await fetch('/api/delete-bulk', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ paths: dupArray })
+                    });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showToast(`Successfully deleted ${result.deleted_count} duplicate files.`);
+                        selectedDuplicates.clear();
+                        
+                        const res = await fetch('/api/duplicates');
+                        const data = await res.json();
+                        duplicateGroups = data.groups || [];
+                        
+                        renderDuplicates();
+                        fetchSystemStats();
+                    } else {
+                        showToast('Error during duplicate removal: ' + result.error, true);
+                    }
+                } catch (err) {
+                    showToast('Deletion failed', true);
+                }
+            };
+        }
+
+        // --- High Performance File Transfer Client UI ---
+
+        let activeTransferSrcs = [];
+
+        function openTransferModal(srcPath) {
+            activeTransferSrcs = [srcPath];
+            document.getElementById('transfer-src-path').innerText = srcPath;
+            
+            // Suggest default cross-drive path
+            const filename = srcPath.split('\\').pop();
+            const currentDrive = srcPath[0].toUpperCase();
+            const alternateDrive = currentDrive === 'C' ? 'D' : 'C';
+            const suggestedDest = `${alternateDrive}:\\Transfers\\${filename}`;
+            
+            document.getElementById('transfer-dest-path').value = suggestedDest;
+            document.getElementById('transfer-dest-path').placeholder = "e.g. D:\\Backups\\file.zip";
+            
+            // Reset Views
+            document.getElementById('transfer-setup-view').style.display = 'block';
+            document.getElementById('transfer-progress-view').style.display = 'none';
+            document.getElementById('btn-transfer-start').style.display = 'inline-flex';
+            document.getElementById('btn-transfer-cancel').style.display = 'inline-flex';
+            document.getElementById('btn-transfer-abort').style.display = 'none';
+            
+            document.getElementById('transfer-modal').classList.add('active');
+        }
+
+        function openBulkTransferModal() {
+            if (selectedFiles.size === 0) {
+                showToast('No files selected', true);
+                return;
+            }
+            activeTransferSrcs = Array.from(selectedFiles);
+            
+            let totalBytes = 0;
+            activeTransferSrcs.forEach(p => {
+                const found = filesData.find(f => f.path === p);
+                if (found) totalBytes += found.size;
+            });
+
+            document.getElementById('transfer-src-path').innerText = `${activeTransferSrcs.length} files selected (${formatBytes(totalBytes)})`;
+            
+            const currentDrive = activeTransferSrcs[0][0].toUpperCase();
+            const alternateDrive = currentDrive === 'C' ? 'D' : 'C';
+            const suggestedDest = `${alternateDrive}:\\Transfers`;
+            
+            document.getElementById('transfer-dest-path').value = suggestedDest;
+            document.getElementById('transfer-dest-path').placeholder = "e.g. D:\\Transfers";
+            
+            // Reset Views
+            document.getElementById('transfer-setup-view').style.display = 'block';
+            document.getElementById('transfer-progress-view').style.display = 'none';
+            document.getElementById('btn-transfer-start').style.display = 'inline-flex';
+            document.getElementById('btn-transfer-cancel').style.display = 'inline-flex';
+            document.getElementById('btn-transfer-abort').style.display = 'none';
+            
+            document.getElementById('transfer-modal').classList.add('active');
+        }
+
+        document.getElementById('btn-transfer-cancel').onclick = () => {
+            document.getElementById('transfer-modal').classList.remove('active');
+            activeTransferSrcs = [];
+        };
+
+        document.getElementById('btn-transfer-start').onclick = async () => {
+            const destPath = document.getElementById('transfer-dest-path').value.trim();
+            const op = document.querySelector('input[name="transfer-op"]:checked').value;
+            
+            if (!destPath) {
+                showToast('Please enter a destination path', true);
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/copy-move/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ src_list: activeTransferSrcs, dest: destPath, operation: op })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    showToast('Starting fast transfer...');
+                    // Switch Modal View to Progress
+                    document.getElementById('transfer-setup-view').style.display = 'none';
+                    document.getElementById('transfer-progress-view').style.display = 'block';
+                    document.getElementById('btn-transfer-start').style.display = 'none';
+                    document.getElementById('btn-transfer-cancel').style.display = 'none';
+                    document.getElementById('btn-transfer-abort').style.display = 'inline-flex';
+                    
+                    startPollingTransfer();
+                } else {
+                    showToast('Error: ' + data.error, true);
+                }
+            } catch (err) {
+                showToast('Failed to start transfer task', true);
+            }
+        };
+
+        document.getElementById('btn-transfer-abort').onclick = async () => {
+            try {
+                await fetch('/api/copy-move/cancel', { method: 'POST' });
+                showToast('Transfer aborted.', true);
+                stopPollingTransfer();
+                document.getElementById('transfer-modal').classList.remove('active');
+            } catch (err) {
+                showToast('Cancel request failed', true);
+            }
+        };
+
+        function startPollingTransfer() {
+            if (transferPollInterval) clearInterval(transferPollInterval);
+            transferPollInterval = setInterval(async () => {
+                try {
+                    const res = await fetch('/api/copy-move/status');
+                    const status = await res.json();
+                    
+                    // Fatal error: transfer crashed without completing
+                    if (status.error && !status.done) {
+                        showToast('Transfer failed: ' + status.error, true);
+                        stopPollingTransfer();
+                        document.getElementById('transfer-modal').classList.remove('active');
+                        return;
+                    }
+
+                    const pct = status.total_bytes > 0 ? (status.bytes_copied / status.total_bytes) * 100 : 0;
+                    document.getElementById('transfer-progress-bar').style.width = pct + '%';
+                    document.getElementById('transfer-stats-bytes').innerText = `${formatBytes(status.bytes_copied)} of ${formatBytes(status.total_bytes)}`;
+                    document.getElementById('transfer-stats-speed').innerText = `${status.speed_mbs} MB/s`;
+                    
+                    if (status.eta_seconds > 0) {
+                        document.getElementById('transfer-stats-eta').innerText = `ETA: ${status.eta_seconds} seconds remaining`;
+                    } else {
+                        document.getElementById('transfer-stats-eta').innerText = `Calculating ETA...`;
+                    }
+
+                    if (status.done) {
+                        stopPollingTransfer();
+                        selectedFiles.clear();
+                        updateBulkBar();
+
+                        // Partial success: some files were skipped/failed (e.g. OneDrive cloud-only)
+                        if (status.error) {
+                            showToast('⚠️ Transfer complete with warnings: ' + status.error, true);
+                        } else {
+                            showToast('✅ Transfer completed successfully!');
+                        }
+
+                        setTimeout(() => {
+                            document.getElementById('transfer-modal').classList.remove('active');
+                            fetchFiles();
+                            fetchSystemStats();
+                            if (document.getElementById('tab-folder-explorer').classList.contains('active')) {
+                                loadFolderTree("");
+                            }
+                        }, 2000);
+                    }
+                } catch (err) {
+                    console.error('Failed to poll transfer status', err);
+                }
+            }, 800);
+        }
+
+
+        function stopPollingTransfer() {
+            if (transferPollInterval) {
+                clearInterval(transferPollInterval);
+                transferPollInterval = null;
+            }
+        }
+
+        // Open in File Explorer API
+        async function revealInExplorer(path) {
+            try {
+                const res = await fetch('/api/explore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path: path })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Revealed folder in File Explorer');
+                } else {
+                    showToast('Failed to reveal file: ' + data.error, true);
+                }
+            } catch (err) {
+                showToast('Failed to open explorer window', true);
+            }
+        }
+
+        // SMART CLEANER TARGET SELECTIONS
+        function toggleSmartTarget(elem) {
+            elem.classList.toggle('checked');
+            calculateSelectedSmartSpace();
+        }
+
+        function calculateSelectedSmartSpace() {
+            let total = 0;
+            if (document.getElementById('check-user-temp').classList.contains('checked')) total += (smartCleanData.user_temp || 0);
+            if (document.getElementById('check-system-temp').classList.contains('checked')) total += (smartCleanData.system_temp || 0);
+            if (document.getElementById('check-browser-cache').classList.contains('checked')) total += (smartCleanData.browser_cache || 0);
+            if (document.getElementById('check-old-downloads').classList.contains('checked')) total += (smartCleanData.old_downloads || 0);
+            
+            document.getElementById('smart-selected-space').innerText = formatBytes(total);
+            document.getElementById('btn-smart-clean-run').disabled = (total === 0);
+        }
+
+        async function scanSmartCleaner() {
+            const btn = document.getElementById('btn-smart-scan');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Scanning...';
+            try {
+                const res = await fetch('/api/smart-clean/scan');
+                const data = await res.json();
+                smartCleanData = data;
+
+                document.getElementById('size-user-temp').innerText = formatBytes(data.user_temp);
+                document.getElementById('size-system-temp').innerText = formatBytes(data.system_temp);
+                document.getElementById('size-browser-cache').innerText = formatBytes(data.browser_cache);
+                document.getElementById('size-old-downloads').innerText = formatBytes(data.old_downloads);
+
+                const totalBytes = data.user_temp + data.system_temp + data.browser_cache + data.old_downloads;
+                document.getElementById('smart-total-space').innerText = formatBytes(totalBytes);
+                
+                calculateSelectedSmartSpace();
+                showToast('Smart scan complete!');
+            } catch (err) {
+                showToast('Smart scan failed', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Scan Cache Items';
+            }
+        }
+
+        async function executeSmartCleaner() {
+            const targets = [];
+            if (document.getElementById('check-user-temp').classList.contains('checked')) targets.push('user_temp');
+            if (document.getElementById('check-system-temp').classList.contains('checked')) targets.push('system_temp');
+            if (document.getElementById('check-browser-cache').classList.contains('checked')) targets.push('browser_cache');
+            if (document.getElementById('check-old-downloads').classList.contains('checked')) targets.push('old_downloads');
+
+            const selectedText = document.getElementById('smart-selected-space').innerText;
+            const detailsDiv = document.getElementById('modal-file-details');
+            document.getElementById('modal-title-text').innerText = 'Execute Smart Cleanup?';
+            document.getElementById('modal-desc-text').innerText = 'This will permanently delete temporary log files and browser cached data. Proceed?';
+            detailsDiv.innerHTML = `
+                <strong>Clean Targets:</strong> ${targets.map(t => t.replace('_', ' ')).join(', ')}<br>
+                <strong>Estimated Space Cleared:</strong> <span style="color: var(--accent-green); font-weight:700;">${selectedText}</span>
+            `;
+
+            document.getElementById('confirm-modal').classList.add('active');
+
+            deleteCallback = async () => {
+                const btn = document.getElementById('btn-smart-clean-run');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="spinner"></div> Cleaning...';
+                try {
+                    const res = await fetch('/api/smart-clean/execute', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ targets: targets })
+                    });
+                    const result = await res.json();
+                    if (result.success) {
+                        showToast(`Successfully freed ${formatBytes(result.bytes_freed)}!`);
+                        scanSmartCleaner();
+                        fetchSystemStats();
+                    } else {
+                        showToast('Error during cleanup: ' + result.error, true);
+                    }
+                } catch (err) {
+                    showToast('Cleanup failed', true);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg> Clean Clutter';
+                }
+            };
+        }
+
+        // DELETIONS & MODALS
+        function triggerDelete(path, size) {
+            document.getElementById('modal-title-text').innerText = 'Delete Permanent?';
+            document.getElementById('modal-desc-text').innerText = 'Are you sure you want to permanently delete this item? This action cannot be undone.';
+            const detailsDiv = document.getElementById('modal-file-details');
+            detailsDiv.innerHTML = `
+                <strong>Path:</strong> <span style="font-family: monospace; word-break: break-all;">${escapeHtml(path)}</span><br>
+                <strong>Estimated Size:</strong> <span style="color: var(--accent-cyan); font-weight:600;">${formatBytes(size)}</span>
+            `;
+            document.getElementById('confirm-modal').classList.add('active');
+
+            deleteCallback = async () => {
+                try {
+                    const response = await fetch('/api/delete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ path: path })
+                    });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showToast('Item deleted successfully');
+                        selectedFiles.delete(path);
+                        updateBulkBar();
+                        fetchFiles();
+                        fetchSystemStats();
+                        if (document.getElementById('tab-folder-explorer').classList.contains('active')) {
+                            loadFolderTree("");
+                        }
+                    } else {
+                        showToast('Error: ' + result.error, true);
+                    }
+                } catch (err) {
+                    showToast('Request failed', true);
+                }
+            };
+        }
+
+        // Bulk Delete Trigger
+        document.getElementById('btn-bulk-delete').onclick = () => {
+            if (selectedFiles.size === 0) return;
+            const sizeArr = Array.from(selectedFiles);
+            let totalBytes = 0;
+            sizeArr.forEach(p => {
+                const found = filesData.find(f => f.path === p);
+                if (found) totalBytes += found.size;
+            });
+
+            document.getElementById('modal-title-text').innerText = 'Delete Multiple Files?';
+            document.getElementById('modal-desc-text').innerText = `Are you sure you want to permanently delete these ${selectedFiles.size} selected files?`;
+            
+            const detailsDiv = document.getElementById('modal-file-details');
+            detailsDiv.innerHTML = `
+                <strong>Files to delete:</strong> ${selectedFiles.size} files<br>
+                <strong>Total Space Recovered:</strong> <span style="color: var(--accent-red); font-weight:700;">${formatBytes(totalBytes)}</span>
+            `;
+            document.getElementById('confirm-modal').classList.add('active');
+
+            deleteCallback = async () => {
+                try {
+                    const response = await fetch('/api/delete-bulk', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ paths: sizeArr })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast(`Deleted ${result.deleted_count} files successfully`);
+                        selectedFiles.clear();
+                        updateBulkBar();
+                        fetchFiles();
+                        fetchSystemStats();
+                    } else {
+                        showToast('Some files failed to delete: ' + result.error, true);
+                    }
+                } catch (err) {
+                    showToast('Bulk delete request failed', true);
+                }
+            };
+        };
+
+        document.getElementById('btn-modal-cancel').onclick = () => {
+            document.getElementById('confirm-modal').classList.remove('active');
+            deleteCallback = null;
+        };
+
+        document.getElementById('btn-modal-confirm').onclick = async () => {
+            document.getElementById('confirm-modal').classList.remove('active');
+            if (deleteCallback) {
+                await deleteCallback();
+                deleteCallback = null;
+            }
+        };
+
+        // Utility operations
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // Actions
+        async function startScan() {
+            try {
+                const mode = document.getElementById('scan-mode').value;
+                const driveSelect = document.getElementById('filter-drive');
+                const drive = driveSelect ? driveSelect.value : 'all';
+                await fetch('/api/scan/start', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode: mode, drive: drive })
+                });
+                const driveLabel = drive === 'all' ? 'all drives' : `Drive ${drive.toUpperCase()}`;
+                showToast(`Scanning ${driveLabel}...`);
+                fetchSystemStats();
+                startPolling();
+            } catch (err) {
+                showToast('Failed to start scan', true);
+            }
+        }
+
+        async function stopScan() {
+            try {
+                await fetch('/api/scan/stop', { method: 'POST' });
+                showToast('Scanning stopped.', true);
+                fetchSystemStats();
+            } catch (err) {
+                showToast('Failed to stop scan', true);
+            }
+        }
+
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(() => {
+                fetchSystemStats();
+                fetchFiles();
+            }, 1000);
+        }
+
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.className = 'alert-toast';
+            if (isError) toast.classList.add('error');
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Event Listeners
+        document.getElementById('btn-scan-start').addEventListener('click', startScan);
+        document.getElementById('btn-scan-stop').addEventListener('click', stopScan);
+        document.getElementById('search-input').addEventListener('input', renderFiles);
+        document.getElementById('filter-drive').addEventListener('change', renderFiles);
+        document.getElementById('filter-type').addEventListener('change', renderFiles);
+        document.getElementById('filter-size').addEventListener('change', renderFiles);
+        document.getElementById('btn-smart-scan').addEventListener('click', scanSmartCleaner);
+        document.getElementById('btn-smart-clean-run').addEventListener('click', executeSmartCleaner);
+
+        // Initial setup
+        fetchSystemStats();
+        fetchFiles();
+        scanSmartCleaner();
+    </script>
+</body>
+</html>

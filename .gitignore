@@ -1,0 +1,17 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Resumes and irrelevant scripts
+*.docx
+generate_resume*.py
+airllm/
+
