@@ -1,6 +1,6 @@
 <div align="center">
   
-# ?? Disk Space Analyzer & Premium Cleaner Suite
+# 🚀 Disk Space Analyzer & Premium Cleaner Suite
 **A lightning-fast, highly optimized local drive analyzer and smart system cleaner.**
 
 [![Python](https://img.shields.io/badge/Python-3.7+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
@@ -18,29 +18,29 @@ Built strictly with Python and Vanilla JavaScript—**zero external pip dependen
 
 ---
 
-## ? Key Features
+## ✨ Key Features
 
-### ?? Ultra-Fast Drive Scanning
+### ⚡ Ultra-Fast Drive Scanning
 Leverages the native Windows Search Index (`ADODB` query) to instantly surface large files across your drives. Falls back to an optimized, multi-threaded `os.scandir` crawler for deep, thorough analysis.
 
-### ?? Smart Semantic Search & Filtering
+### 🧠 Smart Semantic Search & Filtering
 Don't just search by extension—search by meaning. Type "videos" to instantly filter `.mp4`, `.mkv`, and `.mov`, or filter dynamically by drive letter and precise size brackets (e.g., `> 1 GB`, `100MB - 500MB`).
 
-### ?? Duplicate Finder
+### 👯 Duplicate Finder
 Reclaim gigabytes of wasted space effortlessly. The duplicate engine groups files by size and utilizes partial cryptographic hashing (`hashlib.md5`) to guarantee bit-for-bit accuracy without bogging down your system.
 
-### ? Smart System Cleaner
+### 🧹 Smart System Cleaner
 Safely targets and calculates space used by temporary system files, Windows update caches, old downloads, and browser caches (Chrome/Edge) for instant, 1-click clearance.
 
-### ? High-Performance Transfer Engine
+### 🚀 High-Performance Transfer Engine
 Need to back up large files before deleting? Securely move or copy files to backup drives with highly optimized 8MB I/O buffers tailored for maximum SSD throughput.
 
-### ?? Safety & System Integrity
+### 🛡️ Safety & System Integrity
 Strict safeguards prevent the deletion of critical OS files. Gracefully handles cloud-only files (like OneDrive stubs) to prevent system errors or accidental downloads.
 
 ---
 
-## ?? Tech Stack
+## 🛠️ Tech Stack
 
 * **Backend Engine:** Python 3 standard library (`http.server`, `threading`, `os`, `shutil`, `json`). Lightweight and blazingly fast.
 * **Frontend UI:** Vanilla JavaScript (ES6) and HTML5.
@@ -48,7 +48,7 @@ Strict safeguards prevent the deletion of critical OS files. Gracefully handles 
 
 ---
 
-## ?? Getting Started
+## 🚀 Getting Started
 
 You can run this tool entirely locally on your Windows machine in just a few seconds.
 
@@ -74,7 +74,7 @@ You can run this tool entirely locally on your Windows machine in just a few sec
 
 ---
 
-## ?? Architecture Notes
+## 🏗️ Architecture Notes
 
 The backend runs a lightweight, threaded HTTP server on port `8765`. 
 The frontend maintains a real-time connection, polling `/api/status` to fetch disk scan percentages, active directories, and memory usage. File deletion is handled defensively by ensuring the target path isn't protected via the internal `is_protected()` routing, followed by instant UI state reconciliation.
